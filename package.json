@@ -3,7 +3,7 @@
   "title": "Command Gen",
   "description": "Generate CLI commands from natural language using AI",
   "icon": "icon.png",
-  "author": "dq",
+  "author": "dmdque",
   "categories": [
     "Developer Tools",
     "Productivity"

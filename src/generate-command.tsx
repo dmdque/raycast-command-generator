@@ -103,7 +103,10 @@ async function gatherContext(): Promise<Context> {
     } else {
       context.currentDirectory = dir;
     }
-  } else if (context.currentApp === "iTerm2" || context.currentApp === "iTerm") {
+  } else if (
+    context.currentApp === "iTerm2" ||
+    context.currentApp === "iTerm"
+  ) {
     const dirScript = `tell application "iTerm2" to tell current session of current window to get variable named "path"`;
     context.currentDirectory = runAppleScript(dirScript);
   }
@@ -164,7 +167,10 @@ async function addToHistory(prompt: string): Promise<string[]> {
   return updated;
 }
 
-async function callAI(preferences: Preferences, prompt: string): Promise<string> {
+async function callAI(
+  preferences: Preferences,
+  prompt: string,
+): Promise<string> {
   if (preferences.model === "gemini-flash-lite") {
     if (!preferences.googleApiKey) {
       throw new Error("Google API key required for Gemini");
@@ -187,7 +193,9 @@ async function callAI(preferences: Preferences, prompt: string): Promise<string>
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: prompt }],
     });
-    return message.content[0].type === "text" ? message.content[0].text.trim() : "";
+    return message.content[0].type === "text"
+      ? message.content[0].text.trim()
+      : "";
   }
 }
 
@@ -252,7 +260,9 @@ export default function Command() {
   }
 
   const filteredHistory = searchText.trim()
-    ? history.filter((item) => item.toLowerCase().includes(searchText.toLowerCase()))
+    ? history.filter((item) =>
+        item.toLowerCase().includes(searchText.toLowerCase()),
+      )
     : history;
 
   return (
@@ -271,7 +281,10 @@ export default function Command() {
           subtitle={searchText}
           actions={
             <ActionPanel>
-              <Action title="Generate & Paste" onAction={() => generateCommand(searchText)} />
+              <Action
+                title="Generate & Paste"
+                onAction={() => generateCommand(searchText)}
+              />
               <Action
                 title="Generate & Copy"
                 shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
