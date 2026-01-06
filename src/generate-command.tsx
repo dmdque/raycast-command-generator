@@ -23,25 +23,36 @@ interface Preferences {
 const HISTORY_KEY = "command-history";
 const MAX_HISTORY = 20;
 
-const SYSTEM_PROMPT = `You are a CLI command generator. Given a natural language description, output ONLY the exact command to run. No explanations, no markdown, no code blocks, no backticks - just the raw command itself.
+const SYSTEM_PROMPT = `You generate CLI commands. Output ONLY the raw command - no explanations, no preamble, no markdown, no code blocks, no backticks, no commentary. Just the command itself, nothing else.
 
 Rules:
-- Output only the command, nothing else
-- If multiple commands are needed, chain them with && or ;
-- Use common Unix conventions
-- Prefer portable/POSIX commands when possible
-- If the request is ambiguous, make a reasonable assumption and output a working command
-- If context is provided (selected text, current app, current directory), use it to inform your command
+- Output ONLY the command, absolutely nothing else
+- No "Here's the command:" or similar phrases
+- No explanations before or after
+- If multiple commands needed, chain with && or ;
+- Keep it simple - prefer the most straightforward solution
+- Context (current app, directory, selected text) is provided for reference - only use it if directly relevant to the request. Ignore irrelevant context.
 
 Examples:
 User: "find all js files modified in the last day"
-Output: find . -name "*.js" -mtime -1
+find . -name "*.js" -mtime -1
 
 User: "list disk usage sorted by size"
-Output: du -sh * | sort -h
+du -sh * | sort -h
 
 User: "kill process on port 3000"
-Output: lsof -ti:3000 | xargs kill -9`;
+lsof -ti:3000 | xargs kill -9
+
+User: "create a p5.js sketch with a circle"
+cat > sketch.js << 'EOF'
+function setup() {
+  createCanvas(400, 400);
+}
+function draw() {
+  background(220);
+  circle(200, 200, 100);
+}
+EOF`;
 
 interface Context {
   selectedText?: string;
@@ -97,16 +108,37 @@ async function gatherContext(): Promise<Context> {
   return context;
 }
 
+const RELEVANT_APPS = new Set([
+  "Terminal",
+  "iTerm2",
+  "iTerm",
+  "Hyper",
+  "Warp",
+  "Alacritty",
+  "kitty",
+  "Code",
+  "Cursor",
+  "Zed",
+  "Sublime Text",
+  "Atom",
+  "WebStorm",
+  "IntelliJ IDEA",
+  "PyCharm",
+  "Visual Studio Code",
+]);
+
 function buildPrompt(userPrompt: string, context: Context): string {
   const parts: string[] = [];
 
-  if (context.currentApp) {
+  // Only include app context if it's a relevant dev tool
+  if (context.currentApp && RELEVANT_APPS.has(context.currentApp)) {
     parts.push(`Current app: ${context.currentApp}`);
   }
   if (context.currentDirectory) {
     parts.push(`Current directory: ${context.currentDirectory}`);
   }
-  if (context.selectedText) {
+  // Only include selected text if it exists and isn't too long
+  if (context.selectedText && context.selectedText.length < 2000) {
     parts.push(`Selected text:\n${context.selectedText}`);
   }
 
@@ -139,7 +171,7 @@ export default function Command() {
     getHistory().then(setHistory);
   }, []);
 
-  async function generateCommand(prompt: string) {
+  async function generateCommand(prompt: string, copyOnly = false) {
     if (!prompt.trim()) {
       await showToast({
         style: Toast.Style.Failure,
@@ -179,8 +211,14 @@ export default function Command() {
       const updatedHistory = await addToHistory(prompt);
       setHistory(updatedHistory);
       await closeMainWindow();
-      await Clipboard.paste(command);
-      await showHUD("Command pasted");
+
+      if (copyOnly) {
+        await Clipboard.copy(command);
+        await showHUD("Command copied");
+      } else {
+        await Clipboard.paste(command);
+        await showHUD("Command pasted");
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
@@ -214,6 +252,11 @@ export default function Command() {
           actions={
             <ActionPanel>
               <Action title="Generate & Paste" onAction={() => generateCommand(searchText)} />
+              <Action
+                title="Generate & Copy"
+                shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+                onAction={() => generateCommand(searchText, true)}
+              />
             </ActionPanel>
           }
         />
@@ -227,10 +270,20 @@ export default function Command() {
               title={item}
               actions={
                 <ActionPanel>
-                  <Action title="Use Prompt" onAction={() => {
-                    setSearchText(item);
-                    setListKey((k) => k + 1);
-                  }} />
+                  <Action
+                    title="Use Prompt"
+                    onAction={() => {
+                      // BEHAVIOR: Selecting a history item should:
+                      // 1. Populate the search bar with the item text (so user can edit)
+                      // 2. Reset selection to "Generate Command" (so Enter generates)
+                      //
+                      // The setTimeout ensures searchText state is committed before
+                      // the List remounts (via key change). Without this delay, the
+                      // remount happens first and searchText gets lost.
+                      setSearchText(item);
+                      setTimeout(() => setListKey((k) => k + 1), 0);
+                    }}
+                  />
                   <Action
                     title="Clear History"
                     style={Action.Style.Destructive}
