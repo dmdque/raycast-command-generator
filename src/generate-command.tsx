@@ -26,7 +26,7 @@ interface Preferences {
 const HISTORY_KEY = "command-history";
 const MAX_HISTORY = 20;
 
-const SYSTEM_PROMPT = `You generate CLI commands. Output ONLY the raw command - no explanations, no preamble, no markdown, no code blocks, no backticks, no commentary. Just the command itself, nothing else.
+const SYSTEM_PROMPT = `You generate CLI commands or code snippets. Output ONLY the raw command - no explanations, no preamble, no markdown, no code blocks, no backticks, no commentary. Just the command itself, nothing else.
 
 Rules:
 - Output ONLY the command, absolutely nothing else
@@ -46,16 +46,14 @@ du -sh * | sort -h
 User: "kill process on port 3000"
 lsof -ti:3000 | xargs kill -9
 
-User: "create a p5.js sketch with a circle"
-cat > sketch.js << 'EOF'
+User: "p5.js draw circle"
 function setup() {
   createCanvas(400, 400);
 }
 function draw() {
   background(220);
   circle(200, 200, 100);
-}
-EOF`;
+}`;
 
 interface Context {
   selectedText?: string;
@@ -238,6 +236,7 @@ export default function Command() {
 
       const updatedHistory = await addToHistory(prompt);
       setHistory(updatedHistory);
+      setIsLoading(false);
       await closeMainWindow();
 
       if (copyOnly) {
@@ -295,7 +294,9 @@ export default function Command() {
         />
       )}
       {filteredHistory.length > 0 && (
-        <List.Section title="History">
+        <List.Section
+          title={searchText.trim() ? "Filtered History" : "History"}
+        >
           {filteredHistory.map((item, index) => (
             <List.Item
               key={index}

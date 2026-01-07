@@ -9,11 +9,11 @@
 
 type ExtensionPreferences = {
   /** Model - Which AI model to use */
-  "model": "claude-haiku" | "gemini-flash-lite",
-  /** Anthropic API Key - Your Anthropic API key for Claude (required if using Claude) */
-  "anthropicApiKey"?: string,
-  /** Google AI API Key - Your Google AI API key for Gemini (required if using Gemini) */
-  "googleApiKey"?: string
+  "model": "gemini-flash-lite" | "claude-haiku",
+  /** Google AI API Key - Google AI API key for Gemini (required if using Gemini) */
+  "googleApiKey"?: string,
+  /** Anthropic API Key - Anthropic API key for Claude (required if using Claude) */
+  "anthropicApiKey"?: string
 }
 
 /** Preferences accessible in all the extension's commands */

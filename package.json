@@ -1,7 +1,7 @@
 {
-  "name": "command-gen",
-  "title": "Command Gen",
-  "description": "Generate CLI commands from natural language using AI",
+  "name": "command-generator",
+  "title": "Command Generator",
+  "description": "Generate commands and code snippets",
   "icon": "icon.png",
   "author": "dmdque",
   "categories": [
@@ -9,11 +9,14 @@
     "Productivity"
   ],
   "license": "MIT",
+  "platforms": [
+    "macOS"
+  ],
   "commands": [
     {
       "name": "generate-command",
       "title": "Generate Command",
-      "description": "Generate a CLI command from natural language",
+      "description": "Generate a command or code snippet",
       "mode": "view"
     }
   ],
@@ -24,23 +27,29 @@
       "description": "Which AI model to use",
       "type": "dropdown",
       "required": true,
-      "default": "claude-haiku",
+      "default": "gemini-flash-lite",
       "data": [
-        { "title": "Claude Haiku 4.5", "value": "claude-haiku" },
-        { "title": "Gemini Flash 2.5 Lite", "value": "gemini-flash-lite" }
+        {
+          "title": "Gemini 2.5 Flash-Lite",
+          "value": "gemini-flash-lite"
+        },
+        {
+          "title": "Claude Haiku 4.5",
+          "value": "claude-haiku"
+        }
       ]
-    },
-    {
-      "name": "anthropicApiKey",
-      "title": "Anthropic API Key",
-      "description": "Your Anthropic API key for Claude (required if using Claude)",
-      "type": "password",
-      "required": false
     },
     {
       "name": "googleApiKey",
       "title": "Google AI API Key",
-      "description": "Your Google AI API key for Gemini (required if using Gemini)",
+      "description": "Google AI API key for Gemini (required if using Gemini)",
+      "type": "password",
+      "required": false
+    },
+    {
+      "name": "anthropicApiKey",
+      "title": "Anthropic API Key",
+      "description": "Anthropic API key for Claude (required if using Claude)",
       "type": "password",
       "required": false
     }
